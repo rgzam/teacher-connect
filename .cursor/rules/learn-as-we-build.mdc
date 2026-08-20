@@ -1,0 +1,16 @@
+---
+description: Teach interview-ready engineering judgment while building TeacherConnect
+alwaysApply: true
+---
+
+# Learn as we build
+
+TeacherConnect is a learning + resume project. When you add or change code:
+
+- Explain the *why* in plain language (one short paragraph is enough).
+- Name the interview topic it maps to (example: unique constraint → race conditions).
+- Do not dump the whole stack. Teach only what this change introduces.
+- Prefer implementing with the user, not generating the entire app in one pass.
+- Never add real student/parent data. Demo names stay fictional.
+- Do not add Kubernetes, Redis, GraphQL, or microservices unless there is a real need.
+- After a feature, give 2–3 "say this out loud" check questions.

@@ -1,0 +1,323 @@
+// TeacherConnect data model.
+// Learn these interview ideas from this file:
+// - 1:1 (User <-> Teacher)
+// - 1:many (Teacher -> Students)
+// - many:many (Student <-> Guardian through StudentGuardian)
+// - unique constraints to prevent double-booking
+// - enums for workflow states instead of loose strings
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  TEACHER
+  ADMIN
+}
+
+enum ContactPriority {
+  URGENT
+  HIGH
+  NORMAL
+  LOW
+}
+
+enum ContactStatus {
+  NOT_CONTACTED
+  ATTEMPTED
+  REACHED
+  FOLLOW_UP_REQUIRED
+  COMPLETED
+}
+
+enum ContactReason {
+  ACADEMIC_CONCERN
+  MISSING_ASSIGNMENTS
+  ATTENDANCE
+  BEHAVIOR
+  POSITIVE_UPDATE
+  STUDENT_IMPROVEMENT
+  GENERAL_QUESTION
+  PARENT_REQUESTED
+  TEACHER_REQUESTED_CONFERENCE
+  OTHER
+}
+
+enum ContactMethod {
+  PHONE
+  EMAIL
+  IN_PERSON
+  VIDEO
+  OTHER
+}
+
+enum ContactOutcome {
+  REACHED
+  NO_ANSWER
+  LEFT_VOICEMAIL
+  EMAIL_SENT
+  DECLINED
+  OTHER
+}
+
+enum GuardianRelationship {
+  MOTHER
+  FATHER
+  GUARDIAN
+  GRANDPARENT
+  OTHER
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(TEACHER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  teacher     Teacher?
+  auditLogs   AuditLog[]
+  notifications Notification[]
+}
+
+model Teacher {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  firstName   String
+  lastName    String
+  schoolName  String?
+  timezone    String  @default("America/Denver")
+  bookingSlug String  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students            Student[]
+  guardians           Guardian[]
+  appointmentTypes    AppointmentType[]
+  availability        Availability[]
+  blockedDates        BlockedDate[]
+  appointments        Appointment[]
+  contactTasks        ContactTask[]
+  contactLogs         ContactLog[]
+  calendarConnection  CalendarConnection?
+}
+
+model Student {
+  id        String @id @default(uuid())
+  teacherId String
+  firstName String
+  lastName  String
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher         Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  guardians       StudentGuardian[]
+  contactTasks    ContactTask[]
+  contactLogs     ContactLog[]
+  appointments    Appointment[]
+
+  @@index([teacherId])
+}
+
+model Guardian {
+  id        String  @id @default(uuid())
+  teacherId String
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher      Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  students     StudentGuardian[]
+  contactTasks ContactTask[]
+  appointments Appointment[]
+
+  @@index([teacherId])
+}
+
+model StudentGuardian {
+  studentId    String
+  guardianId   String
+  relationship GuardianRelationship @default(GUARDIAN)
+
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, guardianId])
+}
+
+model AppointmentType {
+  id              String  @id @default(uuid())
+  teacherId       String
+  name            String
+  durationMinutes Int
+  description     String?
+  isActive        Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher      Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([teacherId])
+}
+
+model Availability {
+  id        String @id @default(uuid())
+  teacherId String
+  /// 0 = Sunday, 6 = Saturday
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, dayOfWeek, startTime, endTime])
+  @@index([teacherId])
+}
+
+model BlockedDate {
+  id        String   @id @default(uuid())
+  teacherId String
+  date      DateTime @db.Date
+  reason    String?
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, date])
+}
+
+model Appointment {
+  id                String            @id @default(uuid())
+  teacherId         String
+  appointmentTypeId String
+  studentId         String?
+  guardianId        String?
+  startsAt          DateTime
+  endsAt            DateTime
+  status            AppointmentStatus @default(CONFIRMED)
+  reason            String?
+  notes             String?
+  googleEventId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher         Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  appointmentType AppointmentType @relation(fields: [appointmentTypeId], references: [id])
+  student         Student?        @relation(fields: [studentId], references: [id])
+  guardian        Guardian?       @relation(fields: [guardianId], references: [id])
+
+  /// Prevents two parents from booking the exact same start time.
+  @@unique([teacherId, startsAt])
+  @@index([teacherId, startsAt])
+  @@index([status])
+}
+
+model ContactTask {
+  id            String          @id @default(uuid())
+  teacherId     String
+  studentId     String
+  guardianId    String?
+  reason        ContactReason
+  priority      ContactPriority @default(NORMAL)
+  status        ContactStatus   @default(NOT_CONTACTED)
+  dueDate       DateTime        @db.Date
+  followUpDate  DateTime?       @db.Date
+  attemptCount  Int             @default(0)
+  lastContactAt DateTime?
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher  Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student  Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian Guardian?    @relation(fields: [guardianId], references: [id])
+  logs     ContactLog[]
+
+  @@index([teacherId, status])
+  @@index([teacherId, dueDate])
+  @@index([teacherId, priority])
+}
+
+model ContactLog {
+  id            String         @id @default(uuid())
+  teacherId     String
+  studentId     String
+  contactTaskId String
+  method        ContactMethod
+  outcome       ContactOutcome
+  notes         String?
+  contactedAt   DateTime       @default(now())
+
+  teacher     Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student     Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  contactTask ContactTask @relation(fields: [contactTaskId], references: [id], onDelete: Cascade)
+
+  @@index([contactTaskId])
+}
+
+model CalendarConnection {
+  id               String    @id @default(uuid())
+  teacherId        String    @unique
+  googleAccountEmail String
+  accessToken      String
+  refreshToken     String
+  tokenExpiresAt   DateTime
+  calendarId       String    @default("primary")
+  connectedAt      DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorUserId String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

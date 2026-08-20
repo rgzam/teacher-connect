@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Next.js
+apps/web/.next
+apps/web/out
+
+# NestJS
+apps/api/dist
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma
+prisma/generated
+
+# Logs and OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Testing and coverage
+coverage
+playwright-report
+test-results
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
