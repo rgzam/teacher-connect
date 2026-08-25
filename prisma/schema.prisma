@@ -73,6 +73,11 @@ enum GuardianRelationship {
   OTHER
 }
 
+enum MeetingFormat {
+  VIRTUAL
+  HOME_VISIT
+}
+
 enum AppointmentStatus {
   CONFIRMED
   CANCELLED
@@ -101,6 +106,9 @@ model Teacher {
   schoolName  String?
   timezone    String  @default("America/Denver")
   bookingSlug String  @unique
+  bufferMinutes  Int @default(5)
+  minNoticeHours Int @default(12)
+  maxBookingDays Int @default(14)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -167,12 +175,13 @@ model StudentGuardian {
 }
 
 model AppointmentType {
-  id              String  @id @default(uuid())
+  id              String        @id @default(uuid())
   teacherId       String
   name            String
   durationMinutes Int
   description     String?
-  isActive        Boolean @default(true)
+  format          MeetingFormat @default(VIRTUAL)
+  isActive        Boolean       @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -217,9 +226,12 @@ model Appointment {
   startsAt          DateTime
   endsAt            DateTime
   status            AppointmentStatus @default(CONFIRMED)
-  reason            String?
-  notes             String?
-  googleEventId     String?
+  reason             String?
+  notes              String?
+  googleEventId      String?
+  virtualMeetingName String?
+  homeVisitAddress   String?
+  reminderSentAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -229,8 +241,7 @@ model Appointment {
   student         Student?        @relation(fields: [studentId], references: [id])
   guardian        Guardian?       @relation(fields: [guardianId], references: [id])
 
-  /// Prevents two parents from booking the exact same start time.
-  @@unique([teacherId, startsAt])
+  /// Confirmed double-booking is blocked by a partial unique index in SQL.
   @@index([teacherId, startsAt])
   @@index([status])
 }

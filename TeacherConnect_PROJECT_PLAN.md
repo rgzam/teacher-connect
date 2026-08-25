@@ -2,22 +2,16 @@
 
 ## Current progress (updated while scaffolding)
 
-**Now building: Phase 2 — Application Foundation**
+**Now building: Phase 9 — GitHub Actions CI. Demo teacher is Ly Le.**
 
 What is already running locally:
 
 - Monorepo with `apps/web` (Next.js 16), `apps/api` (NestJS), `packages/types`, and Prisma
-- Docker Compose PostgreSQL
-- First database migration + fictional demo seed
-- API health check at `/api/health` and Swagger at `/api/docs`
-- Homepage that reports whether the API and database are connected
+- Teacher login, dashboard, contacts, public booking, Google Calendar, email, reminders
+- Jest unit tests and Playwright for login + parent booking
+- GitHub Actions workflow: lint and Jest, then Playwright
 
-Installed and used on this machine:
-
-- Node.js v24, pnpm, Docker Desktop, Cursor
-- Git is present at `/usr/bin/git` (Xcode command-line tools may still need a one-time install if `git` commands fail)
-
-Not started yet: teacher login, dashboard, contact queue, booking, Google Calendar, GitHub Actions, AWS.
+Not started yet: production Docker images, AWS deploy, polish, optional AI.
 
 ---
 

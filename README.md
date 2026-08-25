@@ -11,6 +11,8 @@ This repo is a TypeScript monorepo:
 
 The full product plan is in `TeacherConnect_PROJECT_PLAN.md`.
 Career / interview study notes: `docs/learning.md`.
+Google Calendar setup: `docs/google-calendar.md`.
+Email setup: `docs/email.md`.
 
 ## Prerequisites
 
@@ -51,7 +53,9 @@ Demo login (after seed):
 | `pnpm db:migrate` | Create / apply database migrations |
 | `pnpm db:seed` | Insert fictional demo data |
 | `pnpm test` | Run API unit tests |
+| `pnpm test:e2e` | Run Playwright (app must be running, or CI starts it) |
+| `pnpm lint` | Typecheck the API and lint the web app |
 
 ## Current phase
 
-Phase 2 — Application Foundation. The goal is: frontend talks to backend, backend talks to PostgreSQL.
+Phase 9 — CI. GitHub Actions runs lint, Jest, then Playwright on every push. The product is through booking, Calendar, email, and reminders.

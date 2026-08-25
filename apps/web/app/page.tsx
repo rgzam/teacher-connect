@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getApiHealth } from '@/lib/api';
 
 export default async function Home() {
@@ -8,13 +9,29 @@ export default async function Home() {
     <main className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-8 px-6 py-16">
       <div>
         <p className="text-sm font-medium tracking-wide text-zinc-500 uppercase">
-          Phase 2 — Application Foundation
+          TeacherConnect
         </p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight">TeacherConnect</h1>
+        <h1 className="mt-2 text-4xl font-semibold tracking-tight">
+          Parent communication, without the sticky notes
+        </h1>
         <p className="mt-3 max-w-xl text-lg leading-7 text-zinc-600">
-          A parent communication and scheduling platform. This first screen proves
-          the frontend, backend, and database can talk to each other.
+          Teachers manage follow-ups and appointments. Parents book a time with a
+          simple link.
         </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/login"
+            className="inline-flex rounded-lg bg-zinc-900 px-4 py-2.5 font-medium text-white"
+          >
+            Teacher sign in
+          </Link>
+          <Link
+            href="/book/ly-le"
+            className="inline-flex rounded-lg border border-zinc-300 px-4 py-2.5 font-medium"
+          >
+            Book with Ly Le
+          </Link>
+        </div>
       </div>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -31,26 +48,6 @@ export default async function Home() {
             </dd>
           </div>
         </dl>
-        {health ? (
-          <p className="mt-4 text-xs text-zinc-500">
-            Last health check: {new Date(health.timestamp).toLocaleString()}
-          </p>
-        ) : (
-          <p className="mt-4 text-sm text-zinc-600">
-            Start the API with <code className="rounded bg-zinc-100 px-1.5 py-0.5">pnpm dev</code> after{' '}
-            <code className="rounded bg-zinc-100 px-1.5 py-0.5">pnpm db:up</code>.
-          </p>
-        )}
-      </section>
-
-      <section className="text-sm leading-6 text-zinc-600">
-        <p>Next learning steps:</p>
-        <ol className="mt-2 list-decimal space-y-1 pl-5">
-          <li>Teacher login (Auth.js / JWT)</li>
-          <li>Teacher dashboard</li>
-          <li>Contact queue and history</li>
-          <li>Public parent booking</li>
-        </ol>
       </section>
     </main>
   );

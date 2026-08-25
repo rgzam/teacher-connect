@@ -14,10 +14,12 @@
     "build": "pnpm --filter api build && pnpm --filter web build",
     "lint": "pnpm --recursive lint",
     "test": "pnpm --filter api test",
+    "test:e2e": "pnpm --filter web test:e2e",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed"
   },

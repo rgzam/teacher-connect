@@ -48,6 +48,124 @@ The database runs in a container. Your Mac does not need a local Postgres instal
 ### Validation and CORS
 `ValidationPipe` rejects extra/invalid body fields. CORS only allows the Next.js origin. Both are junior-to-mid security talking points.
 
+## Login — say these out loud
+
+### Authentication vs authorization
+- **Authentication**: prove who you are (email + password).
+- **Authorization**: what you are allowed to do (teacher vs admin vs public parent booking).
+
+We only did authentication plus a locked `/api/auth/me` route. Role checks come later.
+
+### Why we hash passwords
+The database stores `passwordHash`, never the real password. `bcrypt.compare` checks a login attempt. If the database leaks, attackers do not get usable passwords.
+
+### JWT in an httpOnly cookie
+After login, the API sets `tc_session`. `httpOnly` means JavaScript cannot read it, which blocks a common XSS theft path. We do not put the token in `localStorage`.
+
+Interview line: "The API checks email and password, then stores a JWT in an httpOnly cookie. Protected routes use a NestJS guard. The client never sees the raw token."
+
+### Same error for bad email and bad password
+We say "Invalid email or password" for both cases so attackers cannot fish for valid emails.
+
+### Rate limiting
+Login is limited to 10 tries per minute so a script cannot guess passwords quickly.
+
+## Dashboard — say these out loud
+
+### One aggregated endpoint
+The page calls `GET /api/dashboard` once. The API counts appointments, overdue tasks, and recent logs. The browser does not make four separate list requests. That is a **read model**: data shaped for a screen.
+
+### Authorization uses the session, not a query string
+We load the teacher from the logged-in user. There is no `?teacherId=`. If we took teacherId from the URL, another teacher could try to read someone else's queue.
+
+Interview line: "The dashboard is scoped to the teacher in the JWT. The client cannot pick another teacher's data."
+
+### Timezones
+Appointments are stored in UTC. "Today" is calculated in the teacher's timezone (`America/Denver`). A 3:30 PM meeting in Denver is a different UTC timestamp than 3:30 PM in New York.
+
+### Empty states
+A finished product shows a helpful message when a list is empty, not a blank white box.
+
+## Contacts — say these out loud
+
+### This is a workflow, not a to-do checkbox
+A contact task has statuses: not contacted → attempted → reached / follow-up → completed. Each phone call writes a **history row**. Completing the task does not delete the past attempts.
+
+Interview line: "I modeled parent outreach as a state machine with an append-only contact log, so teachers can see what they already tried."
+
+### Transactions
+Adding a student + guardian, or saving a call + updating the task, happens in `prisma.$transaction`. Either both writes succeed, or neither does. You do not want a log without an updated status.
+
+### Still scoped to the logged-in teacher
+`GET /contacts/:id` looks up the task by id **and** `teacherId`. A guessed UUID from another teacher returns 404.
+
+## Scheduling — say these out loud
+
+### Parents see slots, not the calendar
+The public page `/book/ly-le` only returns open times. It never returns what Ly already has on her calendar. That is a privacy requirement.
+
+### Recompute the slot on the server
+The browser can send any `startsAt`. The API generates valid slots again and rejects times that are not in that list. Never trust the client.
+
+### Unique constraint + transaction
+Two parents can click the same 3:30 slot. The API uses a transaction. A partial unique index on confirmed `(teacherId, startsAt)` makes the second write fail. We return 409: pick another time.
+
+Interview line: "Double-booking is prevented in the database, not only in the UI. If two requests race, only one confirmed appointment is stored."
+
+### Cancel frees the slot
+Cancelled appointments are not confirmed, so that start time can be offered again.
+
+## Google Calendar — say these out loud
+
+### OAuth 2.0 is “permission,” not “our password”
+Ly clicks Connect. Google asks if TeacherConnect may see **busy times** and create **booking events**. Google gives us tokens. We never see her Google password.
+
+### Refresh token
+The access token expires. The refresh token lets the API get a new access token without asking Ly to click Connect every hour.
+
+### Least privilege + free/busy
+We request `calendar.freebusy` and `calendar.events`, not full calendar read. Free/busy returns “busy from 3:30 to 4:00,” not “Dentist.” Parents still only get open slots.
+
+### Booking still works if Google is down
+If Calendar is not connected, or Google fails, the parent can still book. The appointment is stored in our database first.
+
+Interview line: "I used OAuth with the smallest Calendar scopes and the free/busy API so parents never see personal event titles."
+
+## Email — say these out loud
+
+### Booking is the source of truth, email is extra
+Save the appointment first. Then send mail. If Gmail/SMTP is down, the parent is still booked. Same idea as Google Calendar.
+
+### Confirmation, not marketing
+We send “you are booked” and a teacher ping. We do not send ads. School software should be boring and reliable.
+
+Interview line: "Email is a side effect after a successful transaction. A failed send does not roll back the booking."
+
+## Reminders and Playwright — say these out loud
+
+### Cron is a loop, not a button
+A NestJS `@Cron` job runs every minute and asks: “Which confirmed meetings start in the next hour and have not been reminded yet?” That is a **scheduled job**. If the API restarts, the next tick still finds those rows because we store `reminderSentAt` on the appointment.
+
+Interview line: "Reminders are idempotent. We mark the appointment after the send so the same meeting does not get two emails."
+
+### Playwright vs Jest
+Jest tests a function (`shouldSendReminder`) with fake dates. Playwright opens a real browser and clicks the booking page. Unit tests are fast. E2E tests prove the parent form still works after we change validation.
+
+Interview line: "I used Jest for the reminder rule and Playwright for the parent booking flow, including required student names and virtual vs home visit."
+
+## CI — say these out loud
+
+### A robot runs the tests you already have
+GitHub Actions runs `.github/workflows/ci.yml` on every push and pull request. Lint and Jest go first. Playwright runs only if those pass. You do not rely on remembering `pnpm test:e2e` on your laptop.
+
+Interview line: "CI is the same commands I run locally, on a clean machine, so a broken booking form fails the pull request."
+
+### Why Playwright is a second job
+Playwright needs Postgres, a seed, and a built app. That is slower and more expensive. Fast jobs fail first.
+
+### CI has no inbox
+If `SMTP_HOST` is empty on GitHub, we do not call Ethereal. Email is a side effect. Booking still has to succeed.
+
 ## Later phases (do not cram now)
 
 | When we build it | What you will learn |
