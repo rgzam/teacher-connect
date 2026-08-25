@@ -166,6 +166,19 @@ Playwright needs Postgres, a seed, and a built app. That is slower and more expe
 ### CI has no inbox
 If `SMTP_HOST` is empty on GitHub, we do not call Ethereal. Email is a side effect. Booking still has to succeed.
 
+## Docker — say these out loud
+
+### An image is the app plus its runtime
+`pnpm dev` uses whatever Node is on your Mac. A Dockerfile starts from `node:22-alpine`, installs dependencies, builds, and copies only the result. The same image can run on your laptop and later on AWS.
+
+Interview line: "I used multi-stage Docker builds. The first stage compiles the app. The last stage only starts the built API or `next start`."
+
+### Why two images
+The Next.js UI and the NestJS API are different processes. They scale and fail separately. Compose starts Postgres, then the API (it runs migrations), then the web app.
+
+### Browser vs container network
+The parent’s browser talks to `localhost:3000`. Inside Docker, the web container reaches the API at `http://api:3001`. That internal URL is `API_INTERNAL_URL`. We do not put it in the JavaScript sent to the browser.
+
 ## Later phases (do not cram now)
 
 | When we build it | What you will learn |

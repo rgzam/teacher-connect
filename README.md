@@ -55,6 +55,7 @@ Demo login (after seed):
 | `pnpm test` | Run API unit tests |
 | `pnpm test:e2e` | Run Playwright (app must be running, or CI starts it) |
 | `pnpm lint` | Typecheck the API and lint the web app |
+| `pnpm docker:app` | Build and run production images (stop `pnpm dev` first) |
 
 ## Current phase
 

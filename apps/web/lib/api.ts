@@ -17,7 +17,10 @@ import type {
   TeacherSchedule,
 } from '@teacher-connect/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_URL =
+  process.env.API_INTERNAL_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  'http://localhost:3001';
 
 function apiUrl(path: string) {
   if (typeof window === 'undefined') {

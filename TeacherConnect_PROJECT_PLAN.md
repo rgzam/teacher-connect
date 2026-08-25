@@ -2,7 +2,7 @@
 
 ## Current progress (updated while scaffolding)
 
-**Now building: Phase 9 — GitHub Actions CI. Demo teacher is Ly Le.**
+**Now building: Phase 9 — Production Docker images. Demo teacher is Ly Le.**
 
 What is already running locally:
 
