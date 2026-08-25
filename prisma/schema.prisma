@@ -230,6 +230,8 @@ model Appointment {
   notes              String?
   googleEventId      String?
   virtualMeetingName String?
+  meetUrl            String?
+  manageToken        String            @unique @default(uuid())
   homeVisitAddress   String?
   reminderSentAt     DateTime?
 

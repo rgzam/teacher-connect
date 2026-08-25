@@ -168,7 +168,7 @@ async function main() {
     name: 'Virtual Meeting',
     durationMinutes: 20,
     format: 'VIRTUAL',
-    description: 'Video meeting. A meeting name is required.',
+    description: 'Video meeting. A Google Meet link is created when you book.',
   });
 
   const homeVisit = await ensureAppointmentType({

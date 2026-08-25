@@ -1,0 +1,12 @@
+# Copy to deploy/cloudflared.yml after: cloudflared tunnel create teacherconnect
+# Then put your tunnel UUID below. Do not commit deploy/cloudflared.yml.
+
+tunnel: REPLACE_WITH_TUNNEL_ID
+credentials-file: /Users/ricky/.cloudflared/REPLACE_WITH_TUNNEL_ID.json
+
+ingress:
+  - hostname: bookwithly.com
+    service: http://127.0.0.1:3000
+  - hostname: www.bookwithly.com
+    service: http://127.0.0.1:3000
+  - service: http_status:404

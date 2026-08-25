@@ -235,3 +235,34 @@ export async function bookPublic(slug: string, input: PublicBookInput) {
 
   return readJson<BookedAppointment>(response);
 }
+
+export async function getPublicAppointment(token: string) {
+  const response = await fetch(apiUrl(`/api/public/appointments/${token}`), {
+    cache: 'no-store',
+  });
+  return readJson<BookedAppointment>(response);
+}
+
+export async function cancelPublicAppointment(token: string) {
+  const response = await fetch(apiUrl(`/api/public/appointments/${token}/cancel`), {
+    method: 'POST',
+  });
+  return readJson<BookedAppointment>(response);
+}
+
+export async function reschedulePublicAppointment(token: string, startsAt: string) {
+  const response = await fetch(
+    apiUrl(`/api/public/appointments/${token}/reschedule`),
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ startsAt }),
+    },
+  );
+
+  if (response.status === 409) {
+    throw new Error('That time was just booked. Please pick another slot.');
+  }
+
+  return readJson<BookedAppointment>(response);
+}

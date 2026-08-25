@@ -10,10 +10,10 @@ import {
 } from '@/lib/labels';
 
 const priorityClass: Record<string, string> = {
-  URGENT: 'bg-red-50 text-red-800',
-  HIGH: 'bg-amber-50 text-amber-800',
-  NORMAL: 'bg-zinc-100 text-zinc-700',
-  LOW: 'bg-zinc-50 text-zinc-500',
+  URGENT: 'bg-[var(--danger-soft)] text-[var(--danger)]',
+  HIGH: 'bg-[var(--warn-soft)] text-[var(--warn)]',
+  NORMAL: 'bg-[var(--pine-soft)] text-[var(--pine)]',
+  LOW: 'bg-[var(--paper)] text-[var(--muted)]',
 };
 
 export function DashboardView({
@@ -28,10 +28,14 @@ export function DashboardView({
   const name = `${teacher.firstName} ${teacher.lastName}`;
 
   return (
-    <main className="min-h-full bg-zinc-50">
+    <main className="page">
       <AppHeader teacherName={name} onLogout={onLogout} />
 
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-8">
+      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+        <div>
+          <p className="eyebrow">Today</p>
+          <h1 className="mt-1 text-2xl font-semibold">Here is what needs you</h1>
+        </div>
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Today's appointments" value={counts.appointmentsToday} />
           <StatCard label="Calls to make" value={counts.callsToMake} />
@@ -40,20 +44,20 @@ export function DashboardView({
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="card p-5">
             <h2 className="text-lg font-semibold">Today&apos;s schedule</h2>
             {todayAppointments.length === 0 ? (
               <EmptyState text="No parent meetings on the calendar today." />
             ) : (
-              <ul className="mt-4 divide-y divide-zinc-100">
+              <ul className="mt-4 divide-y divide-[var(--line)]">
                 {todayAppointments.map((appointment) => (
                   <li key={appointment.id} className="flex gap-4 py-3 first:pt-0 last:pb-0">
-                    <p className="w-20 shrink-0 text-sm font-medium text-zinc-900">
+                    <p className="w-20 shrink-0 text-sm font-medium text-[var(--pine)]">
                       {formatTime(appointment.startsAt, teacher.timezone)}
                     </p>
                     <div>
                       <p className="font-medium">{appointment.typeName}</p>
-                      <p className="text-sm text-zinc-600">
+                      <p className="text-sm text-[var(--muted)]">
                         {appointment.studentName}
                         {appointment.guardianName ? ` · ${appointment.guardianName}` : ''}
                       </p>
@@ -63,15 +67,15 @@ export function DashboardView({
               </ul>
             )}
             {upcomingAppointments.length > 0 ? (
-              <div className="mt-5 border-t border-zinc-100 pt-4">
-                <h3 className="text-sm font-medium text-zinc-500">Coming up</h3>
+              <div className="mt-5 border-t border-[var(--line)] pt-4">
+                <h3 className="text-sm font-medium text-[var(--muted)]">Coming up</h3>
                 <ul className="mt-2 space-y-2 text-sm">
                   {upcomingAppointments.map((appointment) => (
                     <li key={appointment.id} className="flex justify-between gap-3">
                       <span>
                         {appointment.studentName} · {appointment.typeName}
                       </span>
-                      <span className="text-zinc-500">
+                      <span className="text-[var(--muted)]">
                         {formatDay(appointment.startsAt, teacher.timezone)}{' '}
                         {formatTime(appointment.startsAt, teacher.timezone)}
                       </span>
@@ -82,15 +86,15 @@ export function DashboardView({
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="card p-5">
             <h2 className="text-lg font-semibold">Contact queue</h2>
             {contactQueue.length === 0 ? (
               <EmptyState text="No open parent contacts. Nice work." />
             ) : (
-              <ul className="mt-4 divide-y divide-zinc-100">
+              <ul className="mt-4 divide-y divide-[var(--line)]">
                 {contactQueue.map((task) => (
                   <li key={task.id} className="py-3 first:pt-0 last:pb-0">
-                    <Link href={`/contacts/${task.id}`} className="block hover:bg-zinc-50">
+                    <Link href={`/contacts/${task.id}`} className="-mx-2 rounded-xl px-2 hover:bg-[var(--pine-soft)]">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityClass[task.priority]}`}
@@ -102,7 +106,7 @@ export function DashboardView({
                         ) : null}
                       </div>
                       <p className="mt-1 font-medium">{task.guardianName}</p>
-                      <p className="text-sm text-zinc-600">
+                      <p className="text-sm text-[var(--muted)]">
                         {task.studentName} · {CONTACT_REASON_LABELS[task.reason]} ·{' '}
                         {CONTACT_STATUS_LABELS[task.status]}
                       </p>
@@ -114,16 +118,16 @@ export function DashboardView({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="text-lg font-semibold">Recent communication</h2>
           {recentActivity.length === 0 ? (
             <EmptyState text="Contact history will show up here after the first call." />
           ) : (
-            <ul className="mt-4 divide-y divide-zinc-100">
+            <ul className="mt-4 divide-y divide-[var(--line)]">
               {recentActivity.map((item) => (
                 <li key={item.id} className="py-3 first:pt-0 last:pb-0">
                   <p className="font-medium">{item.studentName}</p>
-                  <p className="text-sm text-zinc-600">
+                  <p className="text-sm text-[var(--muted)]">
                     {formatDay(item.contactedAt, teacher.timezone)} · {item.outcome.replaceAll('_', ' ').toLowerCase()}
                     {item.notes ? ` · ${item.notes}` : ''}
                   </p>
@@ -147,9 +151,9 @@ function StatCard({
   emphasize?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-      <p className="text-sm text-zinc-500">{label}</p>
-      <p className={`mt-2 text-3xl font-semibold ${emphasize ? 'text-red-700' : 'text-zinc-900'}`}>
+    <div className="card p-4">
+      <p className="text-sm text-[var(--muted)]">{label}</p>
+      <p className={`mt-2 text-3xl font-semibold ${emphasize ? 'text-[var(--danger)]' : 'text-[var(--ink)]'}`}>
         {value}
       </p>
     </div>
@@ -157,5 +161,5 @@ function StatCard({
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="mt-4 text-sm text-zinc-500">{text}</p>;
+  return <p className="mt-4 text-sm text-[var(--muted)]">{text}</p>;
 }

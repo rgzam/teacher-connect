@@ -78,6 +78,11 @@ export class CreateBlockedDateDto {
   reason?: string;
 }
 
+export class ReschedulePublicDto {
+  @IsDateString()
+  startsAt!: string;
+}
+
 export class PublicBookDto {
   @IsUUID()
   appointmentTypeId!: string;
@@ -108,10 +113,6 @@ export class PublicBookDto {
   @IsString()
   @MinLength(1)
   studentLastName!: string;
-
-  @IsOptional()
-  @IsString()
-  virtualMeetingName?: string;
 
   @IsOptional()
   @IsString()

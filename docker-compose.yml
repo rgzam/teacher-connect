@@ -4,7 +4,7 @@ services:
     container_name: teacherconnect-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: teacherconnect
       POSTGRES_PASSWORD: teacherconnect
@@ -23,12 +23,20 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     environment:
       DATABASE_URL: postgresql://teacherconnect:teacherconnect@postgres:5432/teacherconnect?schema=public
-      JWT_SECRET: replace-this-with-a-long-random-string
+      JWT_SECRET: ${JWT_SECRET:-replace-this-with-a-long-random-string}
       API_PORT: "3001"
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3001/api/calendar/oauth/callback}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-TeacherConnect <no-reply@teacherconnect.local>}
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,7 +60,7 @@ services:
       args:
         API_INTERNAL_URL: http://api:3001
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       API_INTERNAL_URL: http://api:3001
     depends_on:

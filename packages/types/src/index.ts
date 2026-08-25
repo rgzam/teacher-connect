@@ -230,12 +230,17 @@ export interface BookedAppointment {
   status: string;
   reason: string | null;
   typeName: string;
+  appointmentTypeId?: string;
   format: MeetingFormat;
   durationMinutes: number;
   studentName: string | null;
   guardianName: string | null;
   virtualMeetingName: string | null;
+  meetUrl: string | null;
   homeVisitAddress: string | null;
+  manageToken?: string;
+  bookingSlug?: string;
+  timezone?: string;
 }
 
 export interface TeacherAppointmentsResponse {
@@ -253,7 +258,6 @@ export interface PublicBookInput {
   guardianPhone?: string;
   studentFirstName: string;
   studentLastName: string;
-  virtualMeetingName?: string;
   homeVisitAddress?: string;
   reason?: string;
 }

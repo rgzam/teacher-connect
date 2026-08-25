@@ -2,7 +2,7 @@
 
 ## Current progress (updated while scaffolding)
 
-**Now building: Phase 9 — Production Docker images. Demo teacher is Ly Le.**
+**Now building: Phase 10 — AWS. Docker images work locally. Next: account + $10 budget, then ECR.**
 
 What is already running locally:
 

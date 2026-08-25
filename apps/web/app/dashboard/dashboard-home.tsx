@@ -39,16 +39,16 @@ export function DashboardHome() {
 
   if (loading) {
     return (
-      <main className="flex min-h-full items-center justify-center bg-zinc-50">
-        <p className="text-zinc-500">Loading today&apos;s work…</p>
+      <main className="page flex min-h-full items-center justify-center">
+        <p className="text-[var(--muted)]">Loading today&apos;s work…</p>
       </main>
     );
   }
 
   if (error || !dashboard) {
     return (
-      <main className="flex min-h-full items-center justify-center bg-zinc-50 px-6">
-        <p className="text-zinc-600">{error ?? 'Dashboard is unavailable.'}</p>
+      <main className="page flex min-h-full items-center justify-center px-6">
+        <p className="text-[var(--muted)]">{error ?? 'Dashboard is unavailable.'}</p>
       </main>
     );
   }

@@ -39,24 +39,24 @@ export default function NewStudentPage() {
   }
 
   if (loading) {
-    return <p className="p-8 text-zinc-500">Loading…</p>;
+    return <p className="page p-8 text-[var(--muted)]">Loading…</p>;
   }
 
   return (
-    <main className="min-h-full bg-zinc-50">
+    <main className="page">
       <AppHeader teacherName={teacherName} onLogout={() => void onLogout()} />
       <form onSubmit={onSubmit} className="mx-auto flex max-w-xl flex-col gap-5 px-6 py-8">
         <h1 className="text-2xl font-semibold">Add student</h1>
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-[var(--muted)]">
           Use fictional names for the public demo. Never enter a real student.
         </p>
-        <fieldset className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-5">
+        <fieldset className="card grid gap-3 p-5">
           <legend className="px-1 text-sm font-medium">Student</legend>
           <input name="firstName" required placeholder="First name" className="input" />
           <input name="lastName" required placeholder="Last name" className="input" />
           <textarea name="notes" placeholder="Optional notes" className="input min-h-20" />
         </fieldset>
-        <fieldset className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-5">
+        <fieldset className="card grid gap-3 p-5">
           <legend className="px-1 text-sm font-medium">Guardian</legend>
           <input name="guardianFirstName" required placeholder="First name" className="input" />
           <input name="guardianLastName" required placeholder="Last name" className="input" />
@@ -67,7 +67,7 @@ export default function NewStudentPage() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-zinc-900 px-4 py-2.5 font-medium text-white disabled:opacity-60"
+          className="btn"
         >
           {pending ? 'Saving…' : 'Save student'}
         </button>

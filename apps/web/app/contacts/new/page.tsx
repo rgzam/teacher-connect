@@ -15,7 +15,7 @@ import type { StudentSummary } from '@teacher-connect/types';
 
 export default function NewContactPage() {
   return (
-    <Suspense fallback={<p className="p-8 text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="page p-8 text-[var(--muted)]">Loading…</p>}>
       <NewContactForm />
     </Suspense>
   );
@@ -64,11 +64,11 @@ function NewContactForm() {
   }
 
   if (loading) {
-    return <p className="p-8 text-zinc-500">Loading…</p>;
+    return <p className="page p-8 text-[var(--muted)]">Loading…</p>;
   }
 
   return (
-    <main className="min-h-full bg-zinc-50">
+    <main className="page">
       <AppHeader teacherName={teacherName} onLogout={() => void onLogout()} />
       <form onSubmit={onSubmit} className="mx-auto flex max-w-xl flex-col gap-4 px-6 py-8">
         <h1 className="text-2xl font-semibold">New contact</h1>
@@ -112,7 +112,7 @@ function NewContactForm() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-zinc-900 px-4 py-2.5 font-medium text-white disabled:opacity-60"
+          className="btn"
         >
           {pending ? 'Saving…' : 'Create contact'}
         </button>

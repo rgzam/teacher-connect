@@ -6,7 +6,7 @@ These came from a real conversation. The booking form follows them.
 
 - Student first name and last name
 - Parent first name and last name
-- Virtual meeting name, when the meeting is virtual
+- Virtual meetings get a Google Meet link (Calendar must be connected)
 
 ## Optional
 

@@ -13,6 +13,7 @@ The full product plan is in `TeacherConnect_PROJECT_PLAN.md`.
 Career / interview study notes: `docs/learning.md`.
 Google Calendar setup: `docs/google-calendar.md`.
 Email setup: `docs/email.md`.
+AWS setup: `docs/aws.md`.
 
 ## Prerequisites
 
@@ -56,6 +57,7 @@ Demo login (after seed):
 | `pnpm test:e2e` | Run Playwright (app must be running, or CI starts it) |
 | `pnpm lint` | Typecheck the API and lint the web app |
 | `pnpm docker:app` | Build and run production images (stop `pnpm dev` first) |
+| `pnpm tunnel` | Expose this Mac at bookwithly.com (Cloudflare Tunnel) |
 
 ## Current phase
 

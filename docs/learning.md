@@ -179,6 +179,38 @@ The Next.js UI and the NestJS API are different processes. They scale and fail s
 ### Browser vs container network
 The parent’s browser talks to `localhost:3000`. Inside Docker, the web container reaches the API at `http://api:3001`. That internal URL is `API_INTERNAL_URL`. We do not put it in the JavaScript sent to the browser.
 
+## UI polish — say these out loud
+
+### One set of colors
+Buttons, cards, and inputs share CSS variables (`--pine`, `--paper`). Change the green once, and the whole app follows. That is a design system, even when it is only twenty lines of CSS.
+
+## Mobile booking — say these out loud
+
+### Thumb-sized targets
+Apple’s guideline is about 44px. Time slots and the confirm button use that so a parent can book one-handed without missing the tap.
+
+## Parent manage links — say these out loud
+
+### Unguessable token
+Parents have no account. A random `manageToken` on the appointment is the password for that one booking. Same idea as a password-reset link.
+
+## Home hosting — say these out loud
+
+### Cloudflare Tunnel
+The Mac runs the app on `localhost:3000`. `cloudflared` opens an outbound connection to Cloudflare. Parents hit `https://bookwithly.com`. You do not open router ports and you do not pay for a VPS.
+
+Interview line: "I used a tunnel so a home computer can have HTTPS without a public IP or a cloud bill."
+
+## AWS — say these out loud
+
+### Same images, different computer
+`pnpm docker:app` runs the images on your Mac. AWS ECS runs those same images in AWS’s data center. We do not rewrite the app for the cloud.
+
+Interview line: "I containerized first so deploy is push-an-image, not rebuild-on-the-server."
+
+### Bill before Fargate
+RDS, Fargate, and a load balancer stay on. A $10 budget email is the first AWS resource. ECR (image storage) is cheap. Compute is not.
+
 ## Later phases (do not cram now)
 
 | When we build it | What you will learn |

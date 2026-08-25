@@ -23,37 +23,37 @@ export default function StudentsPage() {
   }, [loading]);
 
   if (loading) {
-    return <p className="p-8 text-zinc-500">Loading…</p>;
+    return <p className="page p-8 text-[var(--muted)]">Loading…</p>;
   }
 
   return (
-    <main className="min-h-full bg-zinc-50">
+    <main className="page">
       <AppHeader teacherName={teacherName} onLogout={() => void onLogout()} />
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-8">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold">Students</h1>
-            <p className="text-sm text-zinc-600">Fictional demo names only.</p>
+            <p className="text-sm text-[var(--muted)]">Fictional demo names only.</p>
           </div>
           <Link
             href="/students/new"
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+            className="btn"
           >
             Add student
           </Link>
         </div>
         {error ? <p className="text-sm text-red-700">{error}</p> : null}
         {students.length === 0 ? (
-          <p className="text-sm text-zinc-500">No students yet.</p>
+          <p className="text-sm text-[var(--muted)]">No students yet.</p>
         ) : (
-          <ul className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 bg-white">
+          <ul className="card divide-y divide-[var(--line)]">
             {students.map((student) => (
               <li key={student.id} className="flex items-center justify-between gap-4 px-5 py-4">
                 <div>
                   <p className="font-medium">
                     {student.firstName} {student.lastName}
                   </p>
-                  <p className="text-sm text-zinc-600">
+                  <p className="text-sm text-[var(--muted)]">
                     {student.guardians[0]
                       ? `${student.guardians[0].firstName} ${student.guardians[0].lastName}`
                       : 'No guardian yet'}
@@ -64,7 +64,7 @@ export default function StudentsPage() {
                 </div>
                 <Link
                   href={`/contacts/new?studentId=${student.id}`}
-                  className="text-sm text-zinc-700 underline"
+                  className="text-sm font-medium text-[var(--pine)] underline"
                 >
                   Add contact
                 </Link>

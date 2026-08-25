@@ -44,7 +44,7 @@ test.describe('parent booking', () => {
     await expect(page.getByTestId('virtual-meeting-name')).toHaveCount(0);
   });
 
-  test('parent can book a virtual meeting', async ({ page }) => {
+  test('parent can book a virtual meeting and open manage', async ({ page }) => {
     const stamp = Date.now();
     await page.goto('/book/ly-le');
     await selectMeetingType(page, 'Virtual Meeting');
@@ -53,13 +53,13 @@ test.describe('parent booking', () => {
     await page.getByTestId('guardian-last').fill('Rivera');
     await page.getByTestId('student-first').fill('Playwright');
     await page.getByTestId('student-last').fill(`Student${stamp}`);
-    await page.getByTestId('virtual-meeting-name').fill('Rivera family check-in');
     await page.getByTestId('confirm-booking').click();
 
     await expect(page.getByTestId('booking-confirmation')).toHaveText(
       'You are booked',
     );
-    await expect(page.getByText('Virtual meeting name: Rivera family check-in'))
-      .toBeVisible();
+    await expect(page.getByTestId('manage-appointment')).toBeVisible();
+    await page.getByTestId('manage-appointment').click();
+    await expect(page.getByTestId('cancel-appointment')).toBeVisible();
   });
 });

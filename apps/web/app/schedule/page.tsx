@@ -20,7 +20,7 @@ const DAYS = [
 
 export default function SchedulePage() {
   return (
-    <Suspense fallback={<p className="p-8 text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="page p-8 text-[var(--muted)]">Loading…</p>}>
       <ScheduleForm />
     </Suspense>
   );
@@ -82,23 +82,23 @@ function ScheduleForm() {
   }
 
   if (loading || !schedule) {
-    return <p className="p-8 text-zinc-500">{error ?? 'Loading…'}</p>;
+    return <p className="page p-8 text-[var(--muted)]">{error ?? 'Loading…'}</p>;
   }
 
   const bookingPath = `/book/${schedule.bookingSlug}`;
 
   return (
-    <main className="min-h-full bg-zinc-50">
+    <main className="page">
       <AppHeader teacherName={teacherName} onLogout={() => void onLogout()} />
       <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
         <div>
           <h1 className="text-2xl font-semibold">Availability</h1>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-[var(--muted)]">
             Parents only see open slots, never your personal calendar.
           </p>
         </div>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="font-semibold">Google Calendar</h2>
           {searchParams.get('calendar') === 'connected' ? (
             <p className="mt-2 text-sm text-emerald-700">Calendar connected.</p>
@@ -107,7 +107,7 @@ function ScheduleForm() {
             <p className="mt-2 text-sm text-red-700">Could not connect Google Calendar.</p>
           ) : null}
           {!schedule.calendar.configured ? (
-            <p className="mt-2 text-sm text-zinc-600">
+            <p className="mt-2 text-sm text-[var(--muted)]">
               Add Google OAuth keys to <code>.env</code> first. See{' '}
               <code>docs/google-calendar.md</code>.
             </p>
@@ -132,7 +132,7 @@ function ScheduleForm() {
           ) : (
             <button
               type="button"
-              className="mt-3 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+              className="btn mt-3"
               onClick={() => {
                 void startCalendarConnect().then(({ url }) => {
                   window.location.href = url;
@@ -142,12 +142,12 @@ function ScheduleForm() {
               Connect Google Calendar
             </button>
           )}
-          <p className="mt-3 text-sm text-zinc-500">
+          <p className="mt-3 text-sm text-[var(--muted)]">
             Parents still only see open slots. We use Google’s free/busy API, not event titles.
           </p>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="font-semibold">Parent booking link</h2>
           <p className="mt-2 text-sm">
             <Link href={bookingPath} className="underline">
@@ -156,7 +156,7 @@ function ScheduleForm() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="font-semibold">Weekly hours</h2>
           <ul className="mt-4 grid gap-3">
             {DAYS.map((day) => {
@@ -192,7 +192,7 @@ function ScheduleForm() {
                       />
                     </>
                   ) : (
-                    <span className="text-zinc-400">Unavailable</span>
+                    <span className="text-[var(--muted)]">Unavailable</span>
                   )}
                 </li>
               );
@@ -203,15 +203,15 @@ function ScheduleForm() {
             type="button"
             onClick={() => void onSave()}
             disabled={pending}
-            className="mt-4 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="btn mt-4"
           >
             {pending ? 'Saving…' : 'Save hours'}
           </button>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="font-semibold">Appointment types</h2>
-          <ul className="mt-3 text-sm text-zinc-700">
+          <ul className="mt-3 text-sm text-[var(--muted)]">
             {schedule.types.map((type) => (
               <li key={type.id}>
                 {type.name} · {type.durationMinutes} minutes ·{' '}

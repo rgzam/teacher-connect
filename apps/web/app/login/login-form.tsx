@@ -6,8 +6,8 @@ import { login } from '@/lib/api';
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('teacher@teacherconnect.dev');
-  const [password, setPassword] = useState('DemoPass123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -30,7 +30,7 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-4">
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700">Email</span>
+        <span className="font-medium">Email</span>
         <input
           type="email"
           data-testid="login-email"
@@ -38,11 +38,11 @@ export function LoginForm() {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-base outline-none focus:border-zinc-900"
+          className="input"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700">Password</span>
+        <span className="font-medium">Password</span>
         <input
           type="password"
           data-testid="login-password"
@@ -51,7 +51,7 @@ export function LoginForm() {
           minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-base outline-none focus:border-zinc-900"
+          className="input"
         />
       </label>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
@@ -59,12 +59,12 @@ export function LoginForm() {
         type="submit"
         data-testid="login-submit"
         disabled={pending}
-        className="rounded-lg bg-zinc-900 px-4 py-2.5 font-medium text-white disabled:opacity-60"
+        className="btn"
       >
         {pending ? 'Signing in…' : 'Sign in'}
       </button>
-      <p className="text-xs text-zinc-500">
-        Demo teacher is pre-filled. This is fictional data for learning only.
+      <p className="text-xs text-[var(--muted)]">
+        Teachers only. Parents use the booking link — no account.
       </p>
     </form>
   );

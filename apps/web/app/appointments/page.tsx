@@ -29,39 +29,44 @@ export default function AppointmentsPage() {
   }
 
   if (loading || !data) {
-    return <p className="p-8 text-zinc-500">{error ?? 'Loading…'}</p>;
+    return <p className="page p-8 text-[var(--muted)]">{error ?? 'Loading…'}</p>;
   }
 
   return (
-    <main className="min-h-full bg-zinc-50">
+    <main className="page">
       <AppHeader teacherName={teacherName} onLogout={() => void onLogout()} />
       <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
         <h1 className="text-2xl font-semibold">Appointments</h1>
         {data.appointments.length === 0 ? (
-          <p className="text-sm text-zinc-500">No upcoming confirmed appointments.</p>
+          <p className="text-sm text-[var(--muted)]">No upcoming confirmed appointments.</p>
         ) : (
-          <ul className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 bg-white">
+          <ul className="card divide-y divide-[var(--line)]">
             {data.appointments.map((appointment) => (
               <li key={appointment.id} className="flex items-start justify-between gap-4 px-5 py-4">
                 <div>
                   <p className="font-medium">{appointment.typeName}</p>
-                  <p className="text-sm text-zinc-600">
+                  <p className="text-sm text-[var(--muted)]">
                     {formatDay(appointment.startsAt, data.timezone)}{' '}
                     {formatTime(appointment.startsAt, data.timezone)}
                     {appointment.guardianName ? ` · ${appointment.guardianName}` : ''}
                     {appointment.studentName ? ` · ${appointment.studentName}` : ''}
                   </p>
                   {appointment.format === 'HOME_VISIT' ? (
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <p className="mt-1 text-sm text-[var(--muted)]">
                       Home visit — go with a coworker
                       {appointment.homeVisitAddress
                         ? ` · ${appointment.homeVisitAddress}`
                         : ''}
                     </p>
                   ) : null}
-                  {appointment.virtualMeetingName ? (
-                    <p className="mt-1 text-sm text-zinc-500">
-                      Meeting name: {appointment.virtualMeetingName}
+                  {appointment.meetUrl ? (
+                    <p className="mt-1 text-sm">
+                      <a
+                        href={appointment.meetUrl}
+                        className="font-medium text-[var(--pine)] underline"
+                      >
+                        Google Meet
+                      </a>
                     </p>
                   ) : null}
                 </div>

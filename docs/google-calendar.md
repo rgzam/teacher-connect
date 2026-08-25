@@ -31,7 +31,7 @@ Sign in as the teacher → **Schedule** → **Connect Google Calendar**.
 ## What we ask Google for
 
 - `calendar.freebusy` — busy ranges only, no event titles
-- `calendar.events` — create/delete TeacherConnect bookings
+- `calendar.events` — create/delete TeacherConnect bookings and a Google Meet link on virtual meetings
 - `userinfo.email` — show which Google account is connected
 
 We do **not** ask for full calendar read of event names. Parents never see Google data.

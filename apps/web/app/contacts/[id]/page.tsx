@@ -63,17 +63,17 @@ export default function ContactDetailPage() {
   }
 
   if (loading || !task) {
-    return <p className="p-8 text-zinc-500">{error ?? 'Loading…'}</p>;
+    return <p className="page p-8 text-[var(--muted)]">{error ?? 'Loading…'}</p>;
   }
 
   const completed = task.status === 'COMPLETED';
 
   return (
-    <main className="min-h-full bg-zinc-50">
+    <main className="page">
       <AppHeader teacherName={teacherName} onLogout={() => void onLogout()} />
       <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
         <div>
-          <p className="text-sm text-zinc-500">
+          <p className="eyebrow">
             {CONTACT_PRIORITY_LABELS[task.priority]} · {CONTACT_STATUS_LABELS[task.status]}
           </p>
           <h1 className="mt-1 text-2xl font-semibold">
@@ -81,24 +81,24 @@ export default function ContactDetailPage() {
               ? `${task.guardian.firstName} ${task.guardian.lastName}`
               : 'Parent contact'}
           </h1>
-          <p className="text-zinc-600">
+          <p className="text-[var(--muted)]">
             {task.student.firstName} {task.student.lastName} · {CONTACT_REASON_LABELS[task.reason]}
           </p>
-          {task.notes ? <p className="mt-2 text-sm text-zinc-600">{task.notes}</p> : null}
+          {task.notes ? <p className="mt-2 text-sm text-[var(--muted)]">{task.notes}</p> : null}
         </div>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="font-semibold">History</h2>
           {task.logs.length === 0 ? (
-            <p className="mt-3 text-sm text-zinc-500">No attempts yet.</p>
+            <p className="mt-3 text-sm text-[var(--muted)]">No attempts yet.</p>
           ) : (
-            <ul className="mt-3 divide-y divide-zinc-100">
+            <ul className="mt-3 divide-y divide-[var(--line)]">
               {task.logs.map((log) => (
                 <li key={log.id} className="py-3 first:pt-0 last:pb-0">
                   <p className="font-medium">
                     {CONTACT_METHOD_LABELS[log.method]} · {CONTACT_OUTCOME_LABELS[log.outcome]}
                   </p>
-                  <p className="text-sm text-zinc-600">
+                  <p className="text-sm text-[var(--muted)]">
                     {formatDay(log.contactedAt, user?.teacher ? timeZone : timeZone)}
                     {log.notes ? ` · ${log.notes}` : ''}
                   </p>
@@ -109,9 +109,9 @@ export default function ContactDetailPage() {
         </section>
 
         {completed ? (
-          <p className="text-sm text-zinc-600">This contact is complete. History stays on the record.</p>
+          <p className="text-sm text-[var(--muted)]">This contact is complete. History stays on the record.</p>
         ) : (
-          <form onSubmit={onSubmit} className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-5">
+          <form onSubmit={onSubmit} className="card grid gap-3 p-5">
             <h2 className="font-semibold">Record an attempt</h2>
             <select name="method" required defaultValue="PHONE" className="input">
               {CONTACT_METHODS.map((method) => (
@@ -140,7 +140,7 @@ export default function ContactDetailPage() {
             <button
               type="submit"
               disabled={pending}
-              className="rounded-lg bg-zinc-900 px-4 py-2.5 font-medium text-white disabled:opacity-60"
+              className="btn"
             >
               {pending ? 'Saving…' : 'Save attempt'}
             </button>

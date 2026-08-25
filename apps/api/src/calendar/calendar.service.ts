@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'crypto';
 import { google } from 'googleapis';
 import { PrismaService } from '../prisma/prisma.service';
 import { TeacherAccessService } from '../teacher/teacher-access.service';
@@ -151,6 +152,7 @@ export class CalendarService {
     startsAt: Date;
     endsAt: Date;
     timeZone: string;
+    createMeet?: boolean;
   }) {
     const auth = await this.getAuthorizedClient(input.teacherId);
     if (!auth) {
@@ -161,6 +163,7 @@ export class CalendarService {
       const calendar = google.calendar({ version: 'v3', auth: auth.client });
       const response = await calendar.events.insert({
         calendarId: auth.connection.calendarId,
+        conferenceDataVersion: input.createMeet ? 1 : 0,
         requestBody: {
           summary: input.summary,
           description:
@@ -173,9 +176,26 @@ export class CalendarService {
             dateTime: input.endsAt.toISOString(),
             timeZone: input.timeZone,
           },
+          conferenceData: input.createMeet
+            ? {
+                createRequest: {
+                  requestId: randomUUID(),
+                  conferenceSolutionKey: { type: 'hangoutsMeet' },
+                },
+              }
+            : undefined,
         },
       });
-      return response.data.id ?? null;
+      const meetUrl =
+        response.data.conferenceData?.entryPoints?.find(
+          (entry) => entry.entryPointType === 'video',
+        )?.uri ??
+        response.data.hangoutLink ??
+        null;
+      return {
+        eventId: response.data.id ?? null,
+        meetUrl,
+      };
     } catch (error) {
       console.error('Google event create failed', error);
       return null;

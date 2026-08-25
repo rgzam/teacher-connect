@@ -22,7 +22,10 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
-    "docker:app": "docker compose --profile app up --build"
+    "docker:app": "docker compose --profile app up --build",
+    "tunnel": "bash scripts/start-tunnel.sh",
+    "teacher:login": "tsx scripts/set-teacher-login.ts",
+    "teacher:reset-data": "tsx scripts/reset-teacher-data.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

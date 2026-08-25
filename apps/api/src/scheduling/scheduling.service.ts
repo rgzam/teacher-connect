@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AppointmentStatus, MeetingFormat, Prisma } from '@prisma/client';
+import { randomBytes } from 'crypto';
 import {
   addDaysIso,
   calendarDateInTimeZone,
@@ -18,6 +19,7 @@ import {
   parentConfirmationEmail,
   reminderEmail,
   teacherBookingEmail,
+  teacherCancellationEmail,
 } from '../email/booking-email';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -136,16 +138,98 @@ export class SchedulingService {
       appointment.googleEventId,
     );
 
-    if (appointment.guardian?.email) {
-      const details = this.toEmailDetails(teacher, appointment);
-      const email = parentCancellationEmail(details);
-      void this.emailService.send({
-        to: appointment.guardian.email,
-        ...email,
-      });
+    await this.notifyCancellation(teacher, appointment);
+    return updated;
+  }
+
+  async getPublicAppointment(token: string) {
+    const appointment = await this.findByManageToken(token);
+    return this.serializeAppointment(appointment, {
+      includeManage: true,
+      bookingSlug: appointment.teacher.bookingSlug,
+      timezone: appointment.teacher.timezone,
+    });
+  }
+
+  async cancelPublicAppointment(token: string) {
+    const appointment = await this.findByManageToken(token);
+    if (appointment.status !== AppointmentStatus.CONFIRMED) {
+      throw new BadRequestException('This appointment is no longer active');
     }
 
-    return updated;
+    const updated = await this.prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { status: AppointmentStatus.CANCELLED },
+    });
+    await this.calendarService.deleteBookingEvent(
+      appointment.teacherId,
+      appointment.googleEventId,
+    );
+    await this.notifyCancellation(appointment.teacher, appointment);
+    return this.serializeAppointment(
+      { ...appointment, ...updated },
+      {
+        includeManage: true,
+        bookingSlug: appointment.teacher.bookingSlug,
+        timezone: appointment.teacher.timezone,
+      },
+    );
+  }
+
+  async reschedulePublicAppointment(token: string, startsAtIso: string) {
+    const appointment = await this.findByManageToken(token);
+    if (appointment.status !== AppointmentStatus.CONFIRMED) {
+      throw new BadRequestException('This appointment is no longer active');
+    }
+
+    const teacher = appointment.teacher;
+    const type = appointment.appointmentType;
+    const startsAt = new Date(startsAtIso);
+    const days = await this.buildBookableDays(
+      teacher,
+      type.durationMinutes,
+      appointment.id,
+    );
+    const allowed = days
+      .flatMap((day) => day.slots)
+      .some((slot) => new Date(slot.startsAt).getTime() === startsAt.getTime());
+
+    if (!allowed) {
+      throw new ConflictException('That time is no longer available');
+    }
+
+    const endsAt = new Date(startsAt.getTime() + type.durationMinutes * 60 * 1000);
+    await this.calendarService.deleteBookingEvent(
+      teacher.id,
+      appointment.googleEventId,
+    );
+    const googleEvent = await this.calendarService.createBookingEvent({
+      teacherId: teacher.id,
+      summary: `${type.name} — TeacherConnect`,
+      startsAt,
+      endsAt,
+      timeZone: teacher.timezone,
+      createMeet: type.format === MeetingFormat.VIRTUAL,
+    });
+
+    const updated = await this.prisma.appointment.update({
+      where: { id: appointment.id },
+      data: {
+        startsAt,
+        endsAt,
+        reminderSentAt: null,
+        googleEventId: googleEvent?.eventId ?? null,
+        meetUrl: googleEvent?.meetUrl ?? null,
+      },
+      include: { appointmentType: true, guardian: true, student: true, teacher: true },
+    });
+
+    await this.sendBookingEmails(teacher, updated);
+    return this.serializeAppointment(updated, {
+      includeManage: true,
+      bookingSlug: teacher.bookingSlug,
+      timezone: teacher.timezone,
+    });
   }
 
   async getPublicTeacher(slug: string) {
@@ -191,13 +275,6 @@ export class SchedulingService {
 
     if (!type) {
       throw new NotFoundException('Appointment type not found');
-    }
-
-    if (
-      type.format === MeetingFormat.VIRTUAL &&
-      !dto.virtualMeetingName?.trim()
-    ) {
-      throw new BadRequestException('A virtual meeting name is required');
     }
 
     const startsAt = new Date(dto.startsAt);
@@ -276,32 +353,41 @@ export class SchedulingService {
             startsAt,
             endsAt,
             reason: dto.reason?.trim() || null,
-            virtualMeetingName: dto.virtualMeetingName?.trim() || null,
             homeVisitAddress: dto.homeVisitAddress?.trim() || null,
+            manageToken: randomBytes(24).toString('base64url'),
             status: AppointmentStatus.CONFIRMED,
           },
           include: { appointmentType: true, guardian: true, student: true },
         });
       });
 
-      const googleEventId = await this.calendarService.createBookingEvent({
+      const googleEvent = await this.calendarService.createBookingEvent({
         teacherId: teacher.id,
         summary: `${type.name} — TeacherConnect`,
         startsAt,
         endsAt,
         timeZone: teacher.timezone,
+        createMeet: type.format === MeetingFormat.VIRTUAL,
       });
 
-      if (googleEventId) {
-        await this.prisma.appointment.update({
-          where: { id: appointment.id },
-          data: { googleEventId },
-        });
-      }
+      const saved = googleEvent?.eventId
+        ? await this.prisma.appointment.update({
+            where: { id: appointment.id },
+            data: {
+              googleEventId: googleEvent.eventId,
+              meetUrl: googleEvent.meetUrl,
+            },
+            include: { appointmentType: true, guardian: true, student: true },
+          })
+        : appointment;
 
-      await this.sendBookingEmails(teacher, appointment);
+      await this.sendBookingEmails(teacher, saved);
 
-      return this.serializeAppointment(appointment);
+      return this.serializeAppointment(saved, {
+        includeManage: true,
+        bookingSlug: teacher.bookingSlug,
+        timezone: teacher.timezone,
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -312,6 +398,61 @@ export class SchedulingService {
         );
       }
       throw error;
+    }
+  }
+
+  private async findByManageToken(token: string) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { manageToken: token },
+      include: {
+        appointmentType: true,
+        guardian: true,
+        student: true,
+        teacher: true,
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    return appointment;
+  }
+
+  private async notifyCancellation(
+    teacher: { userId: string; firstName: string; lastName: string; timezone: string },
+    appointment: {
+      startsAt: Date;
+      appointmentType: { name: string; format: MeetingFormat };
+      guardian: {
+        firstName: string;
+        lastName: string;
+        email: string | null;
+        phone: string | null;
+      } | null;
+      student: { firstName: string; lastName: string } | null;
+      meetUrl?: string | null;
+      homeVisitAddress?: string | null;
+      manageToken?: string;
+    },
+  ) {
+    const details = this.toEmailDetails(teacher, appointment);
+    if (appointment.guardian?.email) {
+      void this.emailService.send({
+        to: appointment.guardian.email,
+        ...parentCancellationEmail(details),
+      });
+    }
+
+    const teacherUser = await this.prisma.user.findUnique({
+      where: { id: teacher.userId },
+      select: { email: true },
+    });
+    if (teacherUser?.email) {
+      void this.emailService.send({
+        to: teacherUser.email,
+        ...teacherCancellationEmail(details),
+      });
     }
   }
 
@@ -336,6 +477,7 @@ export class SchedulingService {
       maxBookingDays: number;
     },
     durationMinutes: number,
+    exceptAppointmentId?: string,
   ) {
     const today = calendarDateInTimeZone(teacher.timezone).iso;
     const rangeStart = dayRangeUtc(teacher.timezone, today).start;
@@ -351,6 +493,7 @@ export class SchedulingService {
         where: {
           teacherId: teacher.id,
           status: AppointmentStatus.CONFIRMED,
+          ...(exceptAppointmentId ? { id: { not: exceptAppointmentId } } : {}),
         },
         select: { startsAt: true, endsAt: true },
       }),
@@ -438,10 +581,16 @@ export class SchedulingService {
     appointment: {
       startsAt: Date;
       appointmentType: { name: string; format: MeetingFormat };
-      guardian: { firstName: string; lastName: string; email: string | null } | null;
+      guardian: {
+        firstName: string;
+        lastName: string;
+        email: string | null;
+        phone?: string | null;
+      } | null;
       student: { firstName: string; lastName: string } | null;
-      virtualMeetingName?: string | null;
+      meetUrl?: string | null;
       homeVisitAddress?: string | null;
+      manageToken?: string;
     },
   ) {
     const details = this.toEmailDetails(teacher, appointment);
@@ -465,10 +614,15 @@ export class SchedulingService {
     appointment: {
       startsAt: Date;
       appointmentType: { name: string; format: MeetingFormat };
-      guardian: { firstName: string; lastName: string } | null;
+      guardian: {
+        firstName: string;
+        lastName: string;
+        phone?: string | null;
+      } | null;
       student: { firstName: string; lastName: string } | null;
-      virtualMeetingName?: string | null;
+      meetUrl?: string | null;
       homeVisitAddress?: string | null;
+      manageToken?: string;
     },
   ) {
     return {
@@ -478,13 +632,25 @@ export class SchedulingService {
       guardianName: appointment.guardian
         ? `${appointment.guardian.firstName} ${appointment.guardian.lastName}`
         : 'A parent',
+      guardianPhone: appointment.guardian?.phone ?? null,
       studentName: appointment.student
         ? `${appointment.student.firstName} ${appointment.student.lastName}`
         : null,
       format: appointment.appointmentType.format,
-      virtualMeetingName: appointment.virtualMeetingName ?? null,
+      meetUrl: appointment.meetUrl ?? null,
       homeVisitAddress: appointment.homeVisitAddress ?? null,
+      manageUrl: appointment.manageToken
+        ? this.manageUrl(appointment.manageToken)
+        : null,
     };
+  }
+
+  private manageUrl(token: string) {
+    const base = (process.env.FRONTEND_URL ?? 'http://localhost:3000').replace(
+      /\/$/,
+      '',
+    );
+    return `${base}/manage/${token}`;
   }
 
   async sendDueReminders(now = new Date()) {
@@ -558,22 +724,32 @@ export class SchedulingService {
     };
   }
 
-  private serializeAppointment(appointment: {
-    id: string;
-    startsAt: Date;
-    endsAt: Date;
-    status: AppointmentStatus;
-    reason: string | null;
-    virtualMeetingName?: string | null;
-    homeVisitAddress?: string | null;
-    appointmentType: {
-      name: string;
-      durationMinutes: number;
-      format: MeetingFormat;
-    };
-    student: { firstName: string; lastName: string } | null;
-    guardian: { firstName: string; lastName: string } | null;
-  }) {
+  private serializeAppointment(
+    appointment: {
+      id: string;
+      startsAt: Date;
+      endsAt: Date;
+      status: AppointmentStatus;
+      reason: string | null;
+      virtualMeetingName?: string | null;
+      meetUrl?: string | null;
+      manageToken?: string;
+      homeVisitAddress?: string | null;
+      appointmentType: {
+        id: string;
+        name: string;
+        durationMinutes: number;
+        format: MeetingFormat;
+      };
+      student: { firstName: string; lastName: string } | null;
+      guardian: { firstName: string; lastName: string } | null;
+    },
+    options?: {
+      includeManage?: boolean;
+      bookingSlug?: string;
+      timezone?: string;
+    },
+  ) {
     return {
       id: appointment.id,
       startsAt: appointment.startsAt.toISOString(),
@@ -581,6 +757,7 @@ export class SchedulingService {
       status: appointment.status,
       reason: appointment.reason,
       typeName: appointment.appointmentType.name,
+      appointmentTypeId: appointment.appointmentType.id,
       format: appointment.appointmentType.format,
       durationMinutes: appointment.appointmentType.durationMinutes,
       studentName: appointment.student
@@ -590,7 +767,13 @@ export class SchedulingService {
         ? `${appointment.guardian.firstName} ${appointment.guardian.lastName}`
         : null,
       virtualMeetingName: appointment.virtualMeetingName ?? null,
+      meetUrl: appointment.meetUrl ?? null,
       homeVisitAddress: appointment.homeVisitAddress ?? null,
+      ...(options?.includeManage && appointment.manageToken
+        ? { manageToken: appointment.manageToken }
+        : {}),
+      ...(options?.bookingSlug ? { bookingSlug: options.bookingSlug } : {}),
+      ...(options?.timezone ? { timezone: options.timezone } : {}),
     };
   }
 }
