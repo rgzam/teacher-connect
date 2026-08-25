@@ -16,7 +16,7 @@ Email setup: `docs/email.md`.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - pnpm
 - Docker Desktop
 
